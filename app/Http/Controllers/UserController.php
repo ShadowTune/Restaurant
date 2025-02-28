@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -88,27 +89,25 @@ class UserController extends Controller {
     }
 
     public function BookTable(Request $request) {
-        // Validate the incoming request
         $request->validate([
             'name' => 'required|string|max:100',
             'email' => 'required|email|max:100',
-            'datetime' => 'required|date|date_format: m-d-Y H:i:s', // Add date format if needed
+            'datetime' => 'required|date',
             'no_of_people' => 'required|integer|min:1',
             'special_request' => 'nullable|string',
         ]);
 
-        // Insert the booking data into the database
-        $query = "INSERT INTO `bookings` (`name`, `email`, `datetime`, `no_of_people`, `special_request`) 
-                VALUES (?, ?, ?, ?, ?)";
-        $result = DB::insert($query, [
+        $datetime = Carbon::createFromFormat('m/d/Y h:i A', $request->datetime)->format('Y-m-d H:i:s');
+
+        $result = DB::insert("INSERT INTO bookings (name, email, datetime, no_of_people, 
+        special_request) VALUES (?, ?, ?, ?, ?)", [
             $request->name,
             $request->email,
-            $request->datetime,
+            $datetime,
             $request->no_of_people,
-            $request->special_request,
+            $request->special_request ?? '',
         ]);
 
-        // Return response based on the result
         if ($result) {
             return redirect('/booking')->with('success', 'Your booking has been made successfully!');
         } else {
